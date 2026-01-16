@@ -9,7 +9,7 @@
 
 #include "common.h"
 
-#include "quantpivot64.c"
+#include "quantpivot64omp.c"
 
 /*
 *
