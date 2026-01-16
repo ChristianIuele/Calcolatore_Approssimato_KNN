@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 //dichiaro funzione assembly
-// extern type euclidean_distance_asm(const type* v, const type* w, int D);     TODO COMMENTO SOLO PER DEBUG 
+extern type euclidean_distance_asm(const type* v, const type* w, int D);     
 
 // ============================================================================
 // FUNZIONE DI COMPARAZIONE PER qsort
@@ -106,8 +106,8 @@ type euclidean_distance_c(const type* v, const type* w, int D) {
 // ============================================================================
 type euclidean_distance(const type* v, const type* w, int D) {
     // Chiama la versione assembly ottimizzata SSE
-    //return euclidean_distance_asm(v, w, D);   // TODO COMMENTO SOLO PER DEBUG
-    return euclidean_distance_c(v, w, D);
+    return euclidean_distance_asm(v, w, D);   
+    //return euclidean_distance_c(v, w, D);
 }
 
 
@@ -233,6 +233,9 @@ void predict(params* input) {
     type* q_to_pivots = malloc(input->h * sizeof(type));
     int* knn_ids = malloc(input->k * sizeof(int));
     type* knn_dists = malloc(input->k * sizeof(type));
+
+    printf("[DEBUG] Allocati knn_ids e knn_dists: k=%d, size_ids=%zu, size_dists=%zu\n",
+       input->k, input->k * sizeof(int), input->k * sizeof(type));
     
     // Per ogni query
     for (int qi = 0; qi < input->nq; qi++) {
@@ -297,17 +300,17 @@ void predict(params* input) {
         }
         
         // 5. Raffinamento: distanza euclidea esatta sui K candidati
-        for (int i = 0; i < input->k; i++) {
-            if (knn_ids[i] >= 0) {
-                knn_dists[i] = euclidean_distance(q,
-                                                  &input->DS[knn_ids[i] * input->D],
-                                                  input->D);
+        for (int idx = 0; idx < input->k; idx++) {  // ✅ RINOMINA i → idx
+            if (knn_ids[idx] >= 0) {
+                knn_dists[idx] = euclidean_distance(q,
+                                                    &input->DS[knn_ids[idx] * input->D],
+                                                    input->D);
             }
         }
         
         // 6. Riordina dopo raffinamento (bubble sort per k piccolo)
-        for (int i = 0; i < input->k - 1; i++) {
-            for (int j = 0; j < input->k - 1 - i; j++) {
+        for (int pass = 0; pass < input->k - 1; pass++) {  // ✅ RINOMINA i → pass
+            for (int j = 0; j < input->k - 1 - pass; j++) {  // ✅ USA pass
                 if (knn_dists[j] > knn_dists[j + 1]) {
                     // Swap distanze
                     type tmp_d = knn_dists[j];
@@ -319,6 +322,11 @@ void predict(params* input) {
                     knn_ids[j + 1] = tmp_id;
                 }
             }
+        }
+
+        if (qi == input->nq - 1) {  // Ultima query
+            printf("[DEBUG] Ultima query: copiando risultati, qi=%d, offset=%d\n", 
+            qi, qi * input->k);
         }
         
         // 7. Salva risultati

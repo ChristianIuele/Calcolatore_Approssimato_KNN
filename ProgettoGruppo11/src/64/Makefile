@@ -1,19 +1,20 @@
 CC = gcc
+NASM = nasm
 
-CFLAGS = -m64 -O3 -march=native -Wall -g
+CFLAGS = -m64 -O3 -march=native -Wall -g -fopenmp
+NASMFLAGS = -f elf64
 
-LIBS = -lm
+LIBS = -lm -fopenmp
+
+ASM_OBJ = quantpivot64_asm.o
 
 all: main64
 
-main64: main.o quantpivot64.o
-	$(CC) $(CFLAGS) main.o quantpivot64.o $(LIBS) -o main64
+$(ASM_OBJ): quantpivot64.nasm
+	$(NASM) $(NASMFLAGS) quantpivot64.nasm -o $(ASM_OBJ)
 
-main.o: main.c common.h
-	$(CC) $(CFLAGS) -c main.c -o main.o
-
-quantpivot64.o: quantpivot64.c common.h
-	$(CC) $(CFLAGS) -c quantpivot64.c -o quantpivot64.o
+main64: main.c common.h quantpivot64.c $(ASM_OBJ)
+	$(CC) $(CFLAGS) main.c $(ASM_OBJ) $(LIBS) -o main64
 
 clean:
 	rm -f *.o main64
