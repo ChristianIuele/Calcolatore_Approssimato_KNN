@@ -101,7 +101,8 @@ type euclidean_distance_c(const type* v, const type* w, int D) {
 // ============================================================================
 type euclidean_distance(const type* v, const type* w, int D) {
     // Usa versione C (assembly verrà integrata dopo)
-    return euclidean_distance_c(v, w, D);
+    //return euclidean_distance_c(v, w, D);
+    return euclidean_distance_asm(v, w, D);  
 }
 
 
